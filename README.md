@@ -155,8 +155,6 @@ server:
   secret_key: "YOUR_GENERATED_SECRET_KEY_HERE"  # Replace this!
 ```
 
-⚠️ **Never use the default key `50b8b41223b935...` in production!**
-
 ### Environment Variables
 
 #### MCP Server (`services/mcp/`)
