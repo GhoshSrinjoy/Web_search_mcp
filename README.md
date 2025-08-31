@@ -77,7 +77,7 @@ flowchart LR
 
 ### 1. One-Command Setup
 ```bash
-git clone <repository>
+git clone https://github.com/GhoshSrinjoy/Web_search_mcp.git
 cd websearch_mcp
 
 # Build and start all services
