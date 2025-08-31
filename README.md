@@ -78,7 +78,7 @@ flowchart LR
 ### 1. One-Command Setup
 ```bash
 git clone https://github.com/GhoshSrinjoy/Web_search_mcp.git
-cd websearch_mcp
+cd Web_search_mcp
 
 # Build and start all services
 docker-compose up -d --build
