@@ -397,7 +397,7 @@ docker-compose exec redis redis-cli config set maxmemory-policy allkeys-lru
 
 ## 📄 License
 
-MIT License - see LICENSE file for details.
+Apache License, Version 2.0 - see LICENSE file for details.
 
 ## 🤝 Contributing
 
