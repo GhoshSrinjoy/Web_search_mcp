@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+trafilatura
+httpx
+beautifulsoup4
+redis
+pydantic
+lxml
+python-multipart

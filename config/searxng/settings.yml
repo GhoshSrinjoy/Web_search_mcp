@@ -1,0 +1,20 @@
+use_default_settings: true
+
+general:
+  debug: false
+  instance_name: "WebSearch MCP"
+
+search:
+  default_doi_resolver: "doi.org"
+  formats:
+    - html
+    - json
+
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  secret_key: "50b8b41223b935a92a9f5f04250a92c011038faecce8a78a0fb8f1c540c57eb2"
+  limiter: false
+
+redis:
+  url: redis://redis:6379/0

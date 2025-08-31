@@ -1,0 +1,7 @@
+fastmcp
+httpx
+redis
+pydantic
+uvicorn
+python-multipart
+typing-extensions
