@@ -8,5 +8,5 @@ ECHO Starting services...
 docker-compose up -d redis searxng extractor
 TIMEOUT /T 5 /NOBREAK >NUL
 ECHO Starting chat with %MODEL%...
-python simple_ollama_chat.py %MODEL%
+python smart_ollama_chat.py %MODEL%
 PAUSE
