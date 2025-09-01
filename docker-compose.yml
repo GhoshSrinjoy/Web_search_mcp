@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  searxng:
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    environment:
+      SEARXNG_BASE_URL: "http://localhost:8080/"
+      SEARXNG_SECRET: "change_this_searxng_secret_key"
+    volumes:
+      - ./config/searxng/settings.yml:/etc/searxng/settings.yml:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
+    depends_on:
+      - redis
+
+  extractor:
+    build: ./services/extractor
+    restart: unless-stopped
+    environment:
+      PORT: "8055"
+      REDIS_URL: "redis://redis:6379"
+      MAX_CONTENT_LENGTH: "10485760"  # 10MB
+      REQUEST_TIMEOUT: "30"
+    ports:
+      - "8055:8055"
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8055/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  mcp:
+    build: ./services/mcp
+    restart: unless-stopped
+    environment:
+      PORT: "8001"
+      SEARXNG_URL: "http://searxng:8080"
+      EXTRACTOR_URL: "http://extractor:8055"
+      REDIS_URL: "redis://redis:6379"
+      MAX_CONCURRENT_REQUESTS: "5"
+      RATE_LIMIT_PER_DOMAIN: "2"  # requests per second
+      CACHE_TTL: "3600"  # 1 hour
+      USE_DISTRIBUTED_RATE_LIMIT: "false"  # Enable for multi-instance deployments
+    ports:
+      - "8001:8001"
+    depends_on:
+      - searxng
+      - extractor
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  redis_data:

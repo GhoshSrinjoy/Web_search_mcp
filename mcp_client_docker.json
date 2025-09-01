@@ -1,0 +1,73 @@
+{
+  "name": "WebSearch MCP - Docker Integration",
+  "description": "Docker-based MCP client configuration for WebSearch service",
+  "mcpServers": {
+    "websearch": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--network", "websearch_mcp_default",
+        "--env", "SEARXNG_URL=http://searxng:8080",
+        "--env", "EXTRACTOR_URL=http://extractor:8055",
+        "--env", "REDIS_URL=redis://redis:6379",
+        "--env", "RATE_LIMIT_PER_DOMAIN=2",
+        "--env", "CACHE_TTL=3600",
+        "--env", "USE_DISTRIBUTED_RATE_LIMIT=false",
+        "websearch_mcp-mcp:latest",
+        "python",
+        "server.py"
+      ],
+      "env": {}
+    }
+  },
+  "tools": [
+    {
+      "name": "web_search",
+      "description": "Search the web using SearXNG metasearch engine with support for multiple engines and categories",
+      "parameters": {
+        "query": "Search query string",
+        "max_results": "Maximum number of results to return (default: 10)",
+        "categories": "Search categories: general, images, videos, news, files, science (default: general)",
+        "time_range": "Optional time filter: day, week, month, year",
+        "language": "Search language code (default: en)",
+        "safe_search": "Safe search level: 0=off, 1=moderate, 2=strict (default: 1)"
+      }
+    },
+    {
+      "name": "fetch_content",
+      "description": "Extract readable content from a URL with intelligent text extraction",
+      "parameters": {
+        "url": "URL to extract content from",
+        "use_javascript": "Enable JavaScript rendering for dynamic content (default: false)",
+        "extract_images": "Include image URLs in extraction (default: false)",
+        "timeout": "Request timeout in seconds (default: 30)"
+      }
+    },
+    {
+      "name": "batch_fetch",
+      "description": "Extract content from multiple URLs concurrently with rate limiting",
+      "parameters": {
+        "urls": "List of URLs to process",
+        "max_concurrent": "Maximum concurrent requests (default: 5)",
+        "use_javascript": "Enable JavaScript rendering (default: false)"
+      }
+    },
+    {
+      "name": "get_session_info", 
+      "description": "Get current MCP session statistics and information"
+    },
+    {
+      "name": "clear_cache",
+      "description": "Clear Redis cache with optional pattern matching",
+      "parameters": {
+        "pattern": "Optional cache key pattern to match (default: clears all)"
+      }
+    },
+    {
+      "name": "health_check",
+      "description": "Check health status of all WebSearch MCP services"
+    }
+  ]
+}
