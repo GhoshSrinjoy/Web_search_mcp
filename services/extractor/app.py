@@ -23,9 +23,20 @@ REQUEST_TIMEOUT = int(os.environ.get("REQUEST_TIMEOUT", "30"))
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Trafilatura config
+# Enhanced Trafilatura config
 config = use_config()
 config.set("DEFAULT", "EXTRACTION_TIMEOUT", str(REQUEST_TIMEOUT))
+config.set("DEFAULT", "MIN_EXTRACTED_SIZE", "200")
+config.set("DEFAULT", "MIN_OUTPUT_SIZE", "100")
+config.set("DEFAULT", "MIN_OUTPUT_COMM_SIZE", "10")
+config.set("DEFAULT", "EXTENSIVE_DATE_SEARCH", "on")
+
+# Precision-focused config for first pass
+precision_config = use_config()
+precision_config.set("DEFAULT", "EXTRACTION_TIMEOUT", str(REQUEST_TIMEOUT))
+precision_config.set("DEFAULT", "MIN_EXTRACTED_SIZE", "300")
+precision_config.set("DEFAULT", "MIN_OUTPUT_SIZE", "200")
+precision_config.set("DEFAULT", "EXTENSIVE_DATE_SEARCH", "off")
 
 app = FastAPI(title="Content Extractor Service", version="1.0.0")
 
@@ -46,6 +57,86 @@ class ExtractResponse(BaseModel):
 
 # Cache client
 redis_client = None
+
+def extract_with_fallback(html: str, url: str, request_params: ExtractRequest) -> tuple[str, dict]:
+    """Enhanced extraction with precision-first approach and fallback."""
+    
+    # Try precision-focused extraction first
+    try:
+        logger.debug("Attempting precision-focused extraction")
+        result = trafilatura.extract(
+            html,
+            config=precision_config,
+            favor_precision=True,
+            include_tables=True,
+            include_comments=False,
+            include_links=request_params.include_links,
+            include_formatting=request_params.include_formatting,
+            output_format='json',
+            target_language='en',
+            with_metadata=False,
+        )
+        
+        if result:
+            import json
+            try:
+                parsed = json.loads(result)
+                text = parsed.get('text', '')
+                metadata = {
+                    'title': parsed.get('title'),
+                    'date': parsed.get('date'),
+                    'author': parsed.get('author'),
+                    'sitename': parsed.get('sitename'),
+                    'extraction_method': 'precision'
+                }
+                if text and len(text.strip()) >= 200:
+                    logger.info(f"Precision extraction successful: {len(text)} chars")
+                    return text, {k: v for k, v in metadata.items() if v}
+            except json.JSONDecodeError:
+                logger.warning("Failed to parse JSON from precision extraction")
+    
+    except Exception as e:
+        logger.warning(f"Precision extraction failed: {e}")
+    
+    # Fallback to recall-focused extraction
+    try:
+        logger.debug("Attempting recall-focused extraction")
+        result = trafilatura.extract(
+            html,
+            config=config,
+            favor_recall=True,
+            include_tables=True,
+            include_comments=True,
+            include_links=request_params.include_links,
+            include_formatting=request_params.include_formatting,
+            target_language='en',
+            with_metadata=False,
+        )
+        
+        if result and len(result.strip()) >= 100:
+            logger.info(f"Recall extraction successful: {len(result)} chars")
+            return result, {'extraction_method': 'recall'}
+            
+    except Exception as e:
+        logger.warning(f"Recall extraction failed: {e}")
+    
+    # Final fallback to basic extraction
+    try:
+        logger.debug("Using basic extraction fallback")
+        result = trafilatura.extract(
+            html,
+            include_links=request_params.include_links,
+            include_formatting=request_params.include_formatting,
+        )
+        
+        if result:
+            logger.info(f"Basic extraction successful: {len(result)} chars")
+            return result, {'extraction_method': 'basic'}
+            
+    except Exception as e:
+        logger.warning(f"Basic extraction failed: {e}")
+    
+    return None, {}
 
 async def get_redis():
     global redis_client
@@ -174,21 +265,14 @@ async def extract_content(request: ExtractRequest):
         except Exception as meta_error:
             logger.warning(f"Metadata extraction failed: {meta_error}")
         
-        # Extract main text content
-        result_text = None
-        try:
-            result_text = trafilatura.extract(
-                downloaded,
-                include_links=request.include_links,
-                include_formatting=request.include_formatting,
-                include_images=False,  # We'll extract images separately
-                with_metadata=False,  # Already extracted above
-                config=config,
-            )
-        except Exception as extract_error:
-            logger.warning(f"Trafilatura extraction failed: {extract_error}")
+        # Extract main text content using enhanced method
+        result_text, enhanced_metadata = extract_with_fallback(downloaded, request.url, request)
         
-        # Fallback to BeautifulSoup if Trafilatura fails
+        # Merge enhanced metadata with existing metadata
+        if enhanced_metadata:
+            metadata_dict.update(enhanced_metadata)
+        
+        # Fallback to BeautifulSoup if enhanced extraction fails
         if not result_text or len(result_text.strip()) < 50:
             logger.info("Using BeautifulSoup fallback extraction")
             try:
