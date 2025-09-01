@@ -1,0 +1,9 @@
+@ECHO OFF
+CD /D "D:\src\websearch_mcp"
+ECHO Starting WebSearch MCP...
+docker-compose up -d redis searxng extractor
+ECHO Waiting for services...
+TIMEOUT /T 5 /NOBREAK >NUL
+ECHO Starting chat interface...
+python simple_ollama_chat.py gpt-oss:20b
+PAUSE
