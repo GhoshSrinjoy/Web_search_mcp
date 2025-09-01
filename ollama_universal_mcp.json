@@ -1,0 +1,157 @@
+{
+  "name": "WebSearch MCP - Universal Ollama Integration",
+  "description": "Universal MCP configuration for all Ollama models with tool support (gpt-oss, deepseek-r1, qwen3, llama3.1, llama3.2, mistral, etc.)",
+  "mcpServers": {
+    "websearch": {
+      "command": "python",
+      "args": ["services/mcp/server.py"],
+      "cwd": "D:/src/websearch_mcp",
+      "env": {
+        "SEARXNG_URL": "http://localhost:8080",
+        "EXTRACTOR_URL": "http://localhost:8055",
+        "REDIS_URL": "redis://localhost:6379",
+        "RATE_LIMIT_PER_DOMAIN": "2",
+        "CACHE_TTL": "3600",
+        "USE_DISTRIBUTED_RATE_LIMIT": "false",
+        "MAX_CONCURRENT_REQUESTS": "5"
+      }
+    }
+  },
+  "supported_models": [
+    "gpt-oss:20b",
+    "gpt-oss:120b", 
+    "deepseek-r1:1.5b",
+    "deepseek-r1:7b",
+    "deepseek-r1:8b",
+    "deepseek-r1:14b",
+    "deepseek-r1:32b",
+    "deepseek-r1:70b",
+    "deepseek-r1:671b",
+    "qwen3:0.6b",
+    "qwen3:1.7b",
+    "qwen3:4b", 
+    "qwen3:8b",
+    "qwen3:14b",
+    "qwen3:30b",
+    "qwen3:32b",
+    "qwen3:235b",
+    "llama3.1:8b",
+    "llama3.1:70b",
+    "llama3.1:405b",
+    "llama3.2:1b",
+    "llama3.2:3b",
+    "mistral:7b"
+  ],
+  "prerequisites": {
+    "ollama_setup": [
+      "# Install Ollama",
+      "curl -fsSL https://ollama.com/install.sh | sh",
+      "",
+      "# Pull your preferred model (example with gpt-oss:20b)",
+      "ollama pull gpt-oss:20b",
+      "",
+      "# Or any other tool-capable model:",
+      "# ollama pull deepseek-r1:7b", 
+      "# ollama pull qwen3:8b",
+      "# ollama pull llama3.1:8b",
+      "# ollama pull llama3.2:3b",
+      "# ollama pull mistral:7b"
+    ],
+    "websearch_services": [
+      "# Start WebSearch MCP supporting services",
+      "docker-compose up -d redis searxng extractor"
+    ],
+    "python_dependencies": [
+      "pip install fastmcp httpx redis[hiredis] pydantic"
+    ]
+  },
+  "usage_examples": {
+    "start_ollama_with_mcp": {
+      "command": "mcphost",
+      "args": [
+        "-m", "ollama:gpt-oss:20b",
+        "--config", "ollama_universal_mcp.json"
+      ],
+      "description": "Start MCP host with gpt-oss:20b model"
+    },
+    "alternative_models": {
+      "deepseek": "mcphost -m ollama:deepseek-r1:7b --config ollama_universal_mcp.json",
+      "qwen": "mcphost -m ollama:qwen3:8b --config ollama_universal_mcp.json", 
+      "llama": "mcphost -m ollama:llama3.1:8b --config ollama_universal_mcp.json",
+      "mistral": "mcphost -m ollama:mistral:7b --config ollama_universal_mcp.json"
+    },
+    "direct_api_usage": {
+      "base_url": "http://localhost:11434/v1",
+      "model": "gpt-oss:20b",
+      "example": "Use any OpenAI-compatible client with Ollama API"
+    }
+  },
+  "model_specific_optimizations": {
+    "gpt-oss": {
+      "reasoning_effort": "medium",
+      "temperature": 0.7,
+      "max_tokens": 2048,
+      "notes": "Excellent for agentic tasks with native tool calling"
+    },
+    "deepseek-r1": {
+      "reasoning_effort": "high", 
+      "temperature": 0.5,
+      "max_tokens": 4096,
+      "notes": "Superior reasoning capabilities, good for complex analysis"
+    },
+    "qwen3": {
+      "temperature": 0.8,
+      "max_tokens": 2048,
+      "notes": "Balanced performance across tasks"
+    },
+    "llama3.1": {
+      "temperature": 0.7,
+      "max_tokens": 2048,
+      "notes": "Reliable tool usage, good general purpose"
+    },
+    "llama3.2": {
+      "temperature": 0.7, 
+      "max_tokens": 1024,
+      "notes": "Lightweight, fast responses"
+    },
+    "mistral": {
+      "temperature": 0.6,
+      "max_tokens": 2048,
+      "notes": "Efficient tool calling"
+    }
+  },
+  "system_prompts": {
+    "default": "You have access to web search and content extraction tools. Use web_search to find current information and fetch_content to extract detailed content from URLs. Always cite sources.",
+    "research_focused": "You are a research assistant with web search capabilities. Use web_search for finding academic papers, news, and current information. Use fetch_content to read full articles. Always provide source citations and analyze information critically.",
+    "development_focused": "You are a development assistant with web search tools. Use web_search to find documentation, tutorials, and code examples. Use fetch_content to extract detailed technical content. Focus on providing accurate, up-to-date technical information."
+  },
+  "tools_reference": {
+    "web_search": {
+      "description": "Search the web using multiple search engines",
+      "best_for": "Finding current information, news, research, documentation",
+      "example": "web_search('latest Python features 2024', max_results=5, time_range='month')"
+    },
+    "fetch_content": {
+      "description": "Extract clean text content from any URL", 
+      "best_for": "Reading articles, documentation, blog posts in full",
+      "example": "fetch_content('https://example.com/article', use_javascript=false)"
+    },
+    "batch_fetch": {
+      "description": "Process multiple URLs concurrently",
+      "best_for": "Analyzing multiple sources quickly",
+      "example": "batch_fetch(['url1', 'url2', 'url3'], max_concurrent=2)"
+    },
+    "get_session_info": {
+      "description": "View current session statistics",
+      "best_for": "Monitoring usage and performance"
+    },
+    "clear_cache": {
+      "description": "Clear search/content cache",
+      "best_for": "Refreshing cached results"
+    },
+    "health_check": {
+      "description": "Check all services are running",
+      "best_for": "Troubleshooting connectivity issues"
+    }
+  }
+}

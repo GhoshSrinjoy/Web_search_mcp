@@ -1,0 +1,53 @@
+{
+  "name": "WebSearch MCP - Ollama Integration (Docker)",
+  "description": "Docker-based MCP configuration for all Ollama models with tool support",
+  "mcpServers": {
+    "websearch": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm", 
+        "-i",
+        "--network", "host",
+        "--env", "SEARXNG_URL=http://localhost:8080",
+        "--env", "EXTRACTOR_URL=http://localhost:8055", 
+        "--env", "REDIS_URL=redis://localhost:6379",
+        "--env", "RATE_LIMIT_PER_DOMAIN=3",
+        "--env", "CACHE_TTL=7200",
+        "--env", "USE_DISTRIBUTED_RATE_LIMIT=false",
+        "--env", "MAX_CONCURRENT_REQUESTS=3",
+        "websearch_mcp-mcp:latest",
+        "python",
+        "server.py"
+      ],
+      "env": {},
+      "timeout": 60
+    }
+  },
+  "supported_ollama_models": [
+    "gpt-oss:20b", "gpt-oss:120b",
+    "deepseek-r1:1.5b", "deepseek-r1:7b", "deepseek-r1:8b", "deepseek-r1:14b", "deepseek-r1:32b", "deepseek-r1:70b", "deepseek-r1:671b",
+    "qwen3:0.6b", "qwen3:1.7b", "qwen3:4b", "qwen3:8b", "qwen3:14b", "qwen3:30b", "qwen3:32b", "qwen3:235b",
+    "llama3.1:8b", "llama3.1:70b", "llama3.1:405b",
+    "llama3.2:1b", "llama3.2:3b", 
+    "mistral:7b"
+  ],
+  "ollama_config": {
+    "model_parameters": {
+      "temperature": 0.7,
+      "max_tokens": 2048,
+      "stream": true
+    },
+    "system_prompt": "You have access to web search and content extraction tools. Use web_search to find current information and fetch_content to extract detailed content from specific URLs. Always cite sources when using web search results.",
+    "tools_guidance": {
+      "web_search": "Use for finding current information, news, research, or general queries. Adjust max_results based on query complexity (3-10 results).",
+      "fetch_content": "Use to extract full content from specific URLs found in search results for detailed analysis.",
+      "batch_fetch": "Use when you need to extract content from multiple related URLs efficiently."
+    }
+  },
+  "example_usage": {
+    "search_query": "web_search('latest AI developments 2024', max_results=5, time_range='month')",
+    "content_extraction": "fetch_content('https://example.com/article', use_javascript=false)",
+    "batch_processing": "batch_fetch(['url1', 'url2', 'url3'], max_concurrent=2)"
+  }
+}
