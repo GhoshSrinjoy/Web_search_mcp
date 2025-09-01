@@ -21,21 +21,22 @@ All core components are working:
 - **Metadata Extraction**: Title, author, date, description, tags, language detection
 - **Flexible API**: RESTful HTTP endpoints for easy integration
 
-### Available APIs
+### Chat Interface Features
 
-1. **`/search`** - Search the web with corrected result counts
-   - Query, max results, language, categories
-   - Returns actual count of results (fixed from SearXNG's 0 count)
-   - Multiple search engine aggregation
+1. **Smart Natural Language**
+   - "Tell me about recent FAPS projects" → Auto search + extract
+   - "What are the latest AI developments?" → Comprehensive research
+   - "Get content from https://example.com" → Auto extraction
 
-2. **`/extract`** - Extract readable content from URLs
-   - Clean text extraction with Trafilatura
-   - Comprehensive metadata extraction
-   - Handles JavaScript-heavy sites with fallback
+2. **Manual Commands**
+   - `/search <query>` - Search the web
+   - `/extract <url>` - Extract content from URL
+   - `/health` - Check service status
 
-3. **`/health`** - Service health monitoring
-   - Check all service dependencies
-   - System status and version info
+3. **Available APIs**
+   - **`/search`** - Multi-engine web search with result counts
+   - **`/extract`** - Clean text extraction with metadata
+   - **`/health`** - Service monitoring and diagnostics
 
 ## 🏗 Architecture
 ```mermaid
@@ -86,15 +87,16 @@ docker-compose up -d --build
 # Wait for services to start (about 30 seconds)
 ```
 
-### 2. Test with Demo Script
+### 2. Start Smart Chat Interface
 ```bash
-# Run comprehensive test with demo searches
-python test_websearch.py
+# Quick start with gpt-oss:20b
+START_WEBSEARCH.BAT
 
-# Or test manually:
-curl -X POST http://localhost:8055/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "artificial intelligence", "max_results": 5}'
+# Or with model selection
+QUICKSTART.BAT
+
+# Or manually start chat interface
+python smart_ollama_chat.py gpt-oss:20b
 ```
 
 ### 3. Verify All Services
@@ -374,26 +376,18 @@ docker-compose exec redis redis-cli config set maxmemory-policy allkeys-lru
 4. **Use SSD storage** for better Redis performance
 5. **Monitor rate limits** and adjust per domain
 
-## 🛣 Roadmap
+## 🤖 Smart Chat Interface
 
-### Phase 2 - JavaScript Rendering (Optional)
-- Playwright integration for SPA content
-- Dynamic content extraction
-- Screenshot capture
+### New: Intelligent Tool Usage
+- **Natural Language**: "Tell me about recent FAPS projects"
+- **Auto Tool Chaining**: Automatically searches + extracts content like Claude/GPT
+- **Smart Intent Detection**: Understands what you want without explicit commands
+- **Multiple Interface Options**: Simple commands or natural conversation
 
-### Phase 3 - Semantic Search (If Needed)  
-- ChromaDB vector database
-- Sentence transformer embeddings
-- Semantic similarity search
-- Content summarization
-
-### Future Enhancements
-- [ ] PDF content extraction
-- [ ] Image OCR support
-- [ ] Multi-language content detection
-- [ ] Webhook notifications
-- [ ] GraphQL API
-- [ ] Prometheus metrics
+### Usage Options
+1. **Smart Interface** (`smart_ollama_chat.py`): Natural language with auto tool chaining
+2. **Simple Interface** (`simple_ollama_chat.py`): Manual commands only
+3. **MCP Integration**: Full Claude Desktop / other MCP client support
 
 ## 📄 License
 
