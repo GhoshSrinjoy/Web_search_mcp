@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
 import httpx
+from httpx import AsyncClient, Limits
 import redis.asyncio as redis
 from pydantic import BaseModel, Field
 from fastmcp import FastMCP
@@ -138,6 +139,16 @@ class RateLimiter:
 rate_limiter = RateLimiter(RATE_LIMIT_PER_DOMAIN, USE_DISTRIBUTED_RATE_LIMIT)
 redis_client = None
 
+# Global HTTP client with connection pooling
+http_client = AsyncClient(
+    limits=Limits(
+        max_keepalive_connections=20,  # Keep 20 connections alive
+        max_connections=100,           # Max 100 total connections
+        keepalive_expiry=30.0         # Keep connections alive for 30s
+    ),
+    timeout=httpx.Timeout(30.0, connect=10.0),  # 30s timeout, 10s connect
+)
+
 async def get_redis():
     global redis_client
     if not redis_client:
@@ -196,10 +207,9 @@ async def web_search(
         params["time_range"] = time_range
     
     try:
-        async with httpx.AsyncClient(timeout=20) as client:
-            response = await client.get(f"{SEARXNG_URL}/search", params=params)
-            response.raise_for_status()
-            data = response.json()
+        response = await http_client.get(f"{SEARXNG_URL}/search", params=params)
+        response.raise_for_status()
+        data = response.json()
     except Exception as e:
         logger.error(f"Search failed: {e}")
         raise
@@ -276,8 +286,9 @@ async def fetch_content(
     }
     
     try:
-        async with httpx.AsyncClient(timeout=timeout + 5) as client:
-            response = await client.post(
+        # Create timeout for this specific request
+        with http_client.timeout(timeout + 5):
+            response = await http_client.post(
                 f"{EXTRACTOR_URL}{endpoint}",
                 json=payload,
             )
@@ -387,8 +398,8 @@ async def health_check() -> dict:
         await cache.ping()
         
         # Check SearXNG
-        async with httpx.AsyncClient(timeout=5) as client:
-            response = await client.get(f"{SEARXNG_URL}/healthz")
+        with http_client.timeout(5):
+            response = await http_client.get(f"{SEARXNG_URL}/healthz")
             response.raise_for_status()
         
         return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
@@ -396,4 +407,16 @@ async def health_check() -> dict:
         return {"status": "unhealthy", "error": str(e)}
 
 if __name__ == "__main__":
-    mcp.run()
+    try:
+        mcp.run()
+    finally:
+        # Clean up HTTP client on exit
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.create_task(http_client.aclose())
+            else:
+                asyncio.run(http_client.aclose())
+        except:
+            pass  # Best effort cleanup
