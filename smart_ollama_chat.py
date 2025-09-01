@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Smart WebSearch MCP + Ollama Chat Interface
 Automatically chains search and extract operations like Claude/GPT

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Simple WebSearch MCP + Ollama Chat Interface
 Connects your Ollama model directly to WebSearch MCP tools
