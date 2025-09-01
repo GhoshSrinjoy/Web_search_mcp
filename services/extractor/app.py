@@ -127,9 +127,9 @@ async def extract_content(request: ExtractRequest):
         }
         
         try:
+            # Trafilatura fetch_url doesn't accept timeout parameter
             downloaded = trafilatura.fetch_url(
                 request.url,
-                timeout=request.timeout,
                 config=config
             )
         except Exception as fetch_error:
@@ -141,8 +141,9 @@ async def extract_content(request: ExtractRequest):
                     response.raise_for_status()
                     downloaded = response.text
             except Exception as httpx_error:
-                logger.error(f"Both fetch methods failed: {httpx_error}")
-                raise HTTPException(status_code=400, detail=f"Failed to fetch URL: {httpx_error}")
+                error_msg = str(httpx_error) if httpx_error else "Unknown network error"
+                logger.error(f"Both fetch methods failed: {error_msg}")
+                raise HTTPException(status_code=400, detail=f"Failed to fetch URL: {error_msg}")
         
         if not downloaded:
             raise HTTPException(status_code=400, detail="No content retrieved from URL")

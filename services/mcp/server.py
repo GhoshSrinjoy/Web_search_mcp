@@ -23,6 +23,7 @@ REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379")
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT_REQUESTS", "5"))
 RATE_LIMIT_PER_DOMAIN = float(os.environ.get("RATE_LIMIT_PER_DOMAIN", "2"))
 CACHE_TTL = int(os.environ.get("CACHE_TTL", "3600"))
+USE_DISTRIBUTED_RATE_LIMIT = os.environ.get("USE_DISTRIBUTED_RATE_LIMIT", "false").lower() == "true"
 
 # Models
 class SearchResult(BaseModel):
@@ -55,14 +56,57 @@ class SessionInfo(BaseModel):
     searches_performed: int
     pages_extracted: int
 
-# Rate limiter
+# Rate limiter with Redis support and fallback
 class RateLimiter:
-    def __init__(self, rate: float):
+    def __init__(self, rate: float, use_distributed: bool = False):
         self.rate = rate
-        self.domains = {}
+        self.use_distributed = use_distributed
+        self.domains = {}  # In-memory fallback
+        self._redis_available = None
         
-    async def acquire(self, url: str):
-        domain = urlparse(url).netloc
+    async def _check_redis_availability(self) -> bool:
+        """Check if Redis is available for distributed rate limiting."""
+        if self._redis_available is not None:
+            return self._redis_available
+            
+        try:
+            cache = await get_redis()
+            await cache.ping()
+            self._redis_available = True
+            logger.info("Redis available - using distributed rate limiting")
+            return True
+        except Exception as e:
+            self._redis_available = False
+            logger.warning(f"Redis unavailable, falling back to in-memory rate limiting: {e}")
+            return False
+    
+    async def _distributed_acquire(self, domain: str) -> bool:
+        """Redis-based distributed rate limiting."""
+        try:
+            cache = await get_redis()
+            key = f"rate_limit:{domain}"
+            
+            # Sliding window counter
+            current = await cache.incr(key)
+            if current == 1:
+                # Set expiry on first request
+                await cache.expire(key, 1)
+            
+            if current > self.rate:
+                # Rate limit exceeded
+                logger.debug(f"Rate limit exceeded for {domain}: {current}/{self.rate}")
+                return False
+                
+            return True
+            
+        except Exception as e:
+            logger.warning(f"Redis rate limiting failed for {domain}: {e}")
+            # Fall back to in-memory
+            self._redis_available = False
+            return await self._memory_acquire(domain)
+    
+    async def _memory_acquire(self, domain: str):
+        """In-memory rate limiting with sleep-based throttling."""
         now = asyncio.get_event_loop().time()
         
         if domain in self.domains:
@@ -71,9 +115,27 @@ class RateLimiter:
                 await asyncio.sleep(1.0 / self.rate - elapsed)
         
         self.domains[domain] = asyncio.get_event_loop().time()
+        return True
+        
+    async def acquire(self, url: str):
+        """Main rate limiting method with Redis support and fallback."""
+        domain = urlparse(url).netloc
+        
+        if self.use_distributed and await self._check_redis_availability():
+            # Try distributed rate limiting
+            if not await self._distributed_acquire(domain):
+                # Rate limit exceeded - reject request
+                raise httpx.HTTPStatusError(
+                    "Rate limit exceeded", 
+                    request=None,
+                    response=type('Response', (), {'status_code': 429})()
+                )
+        else:
+            # Use in-memory rate limiting
+            await self._memory_acquire(domain)
 
 # Initialize components
-rate_limiter = RateLimiter(RATE_LIMIT_PER_DOMAIN)
+rate_limiter = RateLimiter(RATE_LIMIT_PER_DOMAIN, USE_DISTRIBUTED_RATE_LIMIT)
 redis_client = None
 
 async def get_redis():

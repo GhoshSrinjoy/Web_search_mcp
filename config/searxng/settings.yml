@@ -16,5 +16,31 @@ server:
   secret_key: "${SEARXNG_SECRET}"
   limiter: false
 
+# Performance optimizations for API usage
+outgoing:
+  request_timeout: 10.0
+  max_request_timeout: 15.0
+  pool_connections: 100
+  pool_maxsize: 20
+
+# Keep only reliable engines for MCP usage
+engines:
+  - name: google
+    engine: google
+    shortcut: g
+    use_mobile_ui: false
+    
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+    
+  - name: brave
+    engine: brave
+    shortcut: br
+    
+  - name: startpage
+    engine: startpage
+    shortcut: sp
+
 redis:
   url: redis://redis:6379/0

@@ -66,6 +66,7 @@ services:
       MAX_CONCURRENT_REQUESTS: "5"
       RATE_LIMIT_PER_DOMAIN: "2"  # requests per second
       CACHE_TTL: "3600"  # 1 hour
+      USE_DISTRIBUTED_RATE_LIMIT: "false"  # Enable for multi-instance deployments
     ports:
       - "8001:8001"
     depends_on:
