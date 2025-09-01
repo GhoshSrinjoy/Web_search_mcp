@@ -77,8 +77,8 @@ flowchart LR
 
 ### 1. One-Command Setup
 ```bash
-git clone <repository>
-cd websearch_mcp
+git clone https://github.com/GhoshSrinjoy/Web_search_mcp.git
+cd Web_search_mcp
 
 # Build and start all services
 docker-compose up -d --build
@@ -154,8 +154,6 @@ python -c "import secrets; print(secrets.token_hex(32))"
 server:
   secret_key: "YOUR_GENERATED_SECRET_KEY_HERE"  # Replace this!
 ```
-
-⚠️ **Never use the default key `50b8b41223b935...` in production!**
 
 ### Environment Variables
 
@@ -399,7 +397,7 @@ docker-compose exec redis redis-cli config set maxmemory-policy allkeys-lru
 
 ## 📄 License
 
-MIT License - see LICENSE file for details.
+Apache License, Version 2.0 - see LICENSE file for details.
 
 ## 🤝 Contributing
 
