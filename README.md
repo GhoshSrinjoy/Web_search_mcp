@@ -28,44 +28,31 @@ This automatically:
 
 ### Use with Claude Desktop
 
-1. **Start the Docker services first**:
+**⚠️ For Docker setup, use the interactive mode instead:**
+```bash
+START_MCP_INTERACTIVE.BAT
+```
+Choose option 1 (Docker Mode) for the complete containerized experience with all tools.
+
+**Alternative: Local MCP servers with Docker services**
+
+If you prefer Claude Desktop integration:
+
+1. **Start Docker services first**:
 ```bash
 docker-compose up -d redis searxng extractor vectorstore
 ```
 
-2. **Add to your Claude Desktop config** (`%APPDATA%\Claude\claude_desktop_config.json`):
+2. **Install Python dependencies locally**:
+```bash
+pip install -r requirements.txt
+```
+
+3. **Add to Claude Desktop config** (`%APPDATA%\Claude\claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
-    "websearch": {
-      "command": "python",
-      "args": ["D:/src/websearch_mcp/src/mcp/websearch_server.py"],
-      "env": {
-        "WEBSEARCH_URL": "http://localhost:8055"
-      }
-    },
-    "extractor": {
-      "command": "python",
-      "args": ["D:/src/websearch_mcp/src/mcp/extractor_server.py"],
-      "env": {
-        "WEBSEARCH_URL": "http://localhost:8055"
-      }
-    },
-    "storage": {
-      "command": "python",
-      "args": ["D:/src/websearch_mcp/src/mcp/storage_server.py"],
-      "env": {
-        "CHROMA_PATH": "D:/src/websearch_mcp/data/chroma_db"
-      }
-    },
-    "rag": {
-      "command": "python",
-      "args": ["D:/src/websearch_mcp/src/mcp/rag_server.py"],
-      "env": {
-        "CHROMA_PATH": "D:/src/websearch_mcp/data/chroma_db"
-      }
-    },
-    "research": {
+    "websearch-mcp": {
       "command": "python",
       "args": ["D:/src/websearch_mcp/src/mcp/research_server.py"],
       "env": {
@@ -77,7 +64,7 @@ docker-compose up -d redis searxng extractor vectorstore
 }
 ```
 
-3. **Restart Claude Desktop** - You'll see the MCP tools available in the interface
+4. **Restart Claude Desktop** - The research_server provides all tools in one MCP server
 
 ## Available MCP Tools
 
