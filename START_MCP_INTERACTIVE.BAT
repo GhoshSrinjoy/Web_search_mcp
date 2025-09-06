@@ -5,36 +5,14 @@ ECHO   MCP Interactive Chat with Tool Calling
 ECHO ==========================================
 ECHO.
 ECHO Choose your mode:
-ECHO [1] Local Mode - Run directly with local Ollama (faster, fewer dependencies)
-ECHO [2] Docker Mode - Full containerized environment with web search
-ECHO [3] Exit
+ECHO [1] Docker Mode - Full containerized environment with web search
+ECHO [2] Exit
 ECHO.
-SET /P choice="Enter your choice (1, 2, or 3): "
+SET /P choice="Enter your choice (1 or 2): "
 
-IF "%choice%"=="1" GOTO LOCAL_MODE
-IF "%choice%"=="2" GOTO DOCKER_MODE
-IF "%choice%"=="3" GOTO END
+IF "%choice%"=="1" GOTO DOCKER_MODE
+IF "%choice%"=="2" GOTO END
 ECHO Invalid choice. Exiting...
-GOTO END
-
-:LOCAL_MODE
-ECHO.
-ECHO ==========================================
-ECHO   Starting LOCAL MODE
-ECHO ==========================================
-ECHO.
-ECHO Requirements:
-ECHO - Ollama running locally (ollama serve)
-ECHO - Conda environment 'thesis_env'
-ECHO.
-ECHO Note: Web search will be limited without external services
-ECHO Press any key to continue, or Ctrl+C to cancel...
-PAUSE >NUL
-
-ECHO.
-ECHO Activating conda environment and starting MCP client...
-CALL conda activate thesis_env
-python src/client/mcp_multi_client.py
 GOTO END
 
 :DOCKER_MODE
