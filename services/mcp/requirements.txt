@@ -1,8 +1,0 @@
-fastmcp
-httpx
-redis[hiredis]
-pydantic
-uvicorn
-python-multipart
-typing-extensions
-python-dotenv

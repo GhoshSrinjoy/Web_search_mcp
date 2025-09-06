@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "websearch": {
+      "command": "python",
+      "args": ["/app/src/mcp/mcp_server.py"],
+      "env": {
+        "WEBSEARCH_URL": "http://extractor:8000"
+      }
+    }
+  },
+  "availableModels": [
+    "gpt-oss:20b",
+    "qwen3:0.6b", 
+    "qwen3:8b"
+  ],
+  "defaultModel": "gpt-oss:20b",
+  "llm": {
+    "baseUrl": "http://ollama:11434"
+  }
+}

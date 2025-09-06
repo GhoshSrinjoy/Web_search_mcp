@@ -1,407 +1,243 @@
-# WebSearch MCP - Advanced Web Search & Content Extraction
+# WebSearch MCP RAG - Dockerized AI Assistant
 
-A comprehensive Model Context Protocol (MCP) server that provides intelligent web search and content extraction capabilities using SearXNG, Trafilatura, and Redis caching.
+A complete dockerized implementation of Model Context Protocol (MCP) for autonomous web search, content extraction, and Retrieval-Augmented Generation (RAG) using ChromaDB and local LLMs.
 
-## ✅ Current Status - FULLY OPERATIONAL
+## 🏗️ Architecture
 
-All core components are working:
-- **✅ SearXNG Search Engine**: Multi-engine web search with 40+ search providers
-- **✅ Content Extractor**: Clean text extraction from any URL with metadata
-- **✅ Redis Caching**: High-performance caching for search results
-- **✅ Docker Deployment**: One-command setup with docker-compose
-- **✅ Corrected Result Counts**: Fixed `number_of_results` to show actual count
+This system implements MCP 2025 specification with dynamic tool selection, allowing AI models to autonomously decide which tools to use based on the query context.
 
-## 🚀 Features
-
-### Core Search & Extraction (✅ Implemented)
-- **Multi-Engine Search**: Powered by SearXNG with multiple search engines (Google, DuckDuckGo, Brave, StartPage, Wikipedia, etc.)
-- **Intelligent Content Extraction**: Uses Trafilatura with BeautifulSoup fallback
-- **Smart Caching**: Redis-based caching for search results and extracted content  
-- **Clean Text Output**: Removes ads, navigation, and clutter - returns only content
-- **Metadata Extraction**: Title, author, date, description, tags, language detection
-- **Flexible API**: RESTful HTTP endpoints for easy integration
-
-### Chat Interface Features
-
-1. **Smart Natural Language**
-   - "Tell me about recent FAPS projects" → Auto search + extract
-   - "What are the latest AI developments?" → Comprehensive research
-   - "Get content from https://example.com" → Auto extraction
-
-2. **Manual Commands**
-   - `/search <query>` - Search the web
-   - `/extract <url>` - Extract content from URL
-   - `/health` - Check service status
-
-3. **Available APIs**
-   - **`/search`** - Multi-engine web search with result counts
-   - **`/extract`** - Clean text extraction with metadata
-   - **`/health`** - Service monitoring and diagnostics
-
-## 🏗 Architecture
-```mermaid
-flowchart LR
-    Client["🤖 MCP Client<br/>(Model)"]
-    Server["⚡ MCP Server<br/>(FastAPI)"]
-    SearXNG["🔍 SearXNG API<br/>(Multi-Engine)"]
-    Engines["🌐 Search<br/>Engines"]
-    Extractor["📄 Extractor<br/>Service"]
-    Tools["🛠️ Trafilatura<br/>+ BS4"]
-    Cache["💾 Redis<br/>Cache"]
-    
-    Client --> Server
-    Server --> SearXNG
-    SearXNG --> Engines
-    Server --> Extractor
-    Extractor --> Tools
-    Extractor --> Cache
-    
-    classDef client fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef server fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef search fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
-    classDef process fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef storage fill:#fce4ec,stroke:#880e4f,stroke-width:2px
-    
-    class Client client
-    class Server,SearXNG server
-    class Engines search
-    class Extractor,Tools process
-    class Cache storage
+```
+websearch_mcp/
+├── src/
+│   ├── client/              # MCP Client for LLM integration  
+│   │   ├── mcp_client.py    # Main MCP client with dynamic tool calling
+│   │   └── mcp_client_config.json # Client configuration
+│   └── mcp/                 # MCP Server exposing RAG tools
+│       └── mcp_server.py    # Server with web_search, extract_content, rag_search tools
+├── services/
+│   ├── extractor/           # Content extraction service (FastAPI)
+│   │   ├── app.py           # Trafilatura-based content extraction
+│   │   ├── Dockerfile       # Container definition
+│   │   └── requirements.txt # Python dependencies
+│   ├── vectorstore/         # ChromaDB vector database service
+│   │   ├── content_vectorizer.py # Smart chunking & embedding
+│   │   ├── Dockerfile       # Container definition  
+│   │   └── requirements.txt # Python dependencies
+│   └── websearch/           # Web search service wrapper
+│       └── websearch_service.py # SearXNG integration
+├── data/
+│   └── chroma_db/           # Persistent vector database
+├── config/
+│   └── searxng/
+│       └── settings.yml     # SearXNG search engine configuration
+├── docker-compose.yml       # Complete service orchestration
+├── Dockerfile              # MCP client container
+├── START_MCP_RAG.BAT       # Windows launch script
+└── requirements.txt        # Main dependencies
 ```
 
-## 🐳 Quick Start with Docker
+## 🔧 Services Architecture
+
+### Core Services
+1. **Redis** - Caching and session management
+2. **SearXNG** - Privacy-focused search engine
+3. **Extractor** - Advanced content extraction using Trafilatura
+4. **Vectorstore** - ChromaDB with intelligent chunking and embeddings  
+5. **MCP Client** - Dynamic tool orchestration with local LLMs
+
+### MCP Tools (Auto-Selected by AI)
+
+#### 🧠 **Intelligent Tools (AI Auto-Selects Based on Query)**
+- **`research_query`** - Comprehensive research with parallel searches, smart content processing, and RAG synthesis
+- **`smart_answer`** - Intelligent answering: checks knowledge base first, supplements with web search when needed
+
+#### 🔧 **Core Tools (Building Blocks)**  
+- **`web_search`** - Search internet for current information (with Redis caching)
+- **`extract_content`** - Extract full text from webpages 
+- **`rag_search`** - Search stored knowledge base with semantic similarity
+- **`store_content`** - Store content in vector database with smart chunking
+- **`knowledge_stats`** - View knowledge base statistics and health
+
+## 🚀 Quick Start
 
 ### Prerequisites
-- Docker and Docker Compose
-- 2GB+ available RAM
-- Ports 8055, 8080 available
+- Docker & Docker Compose
+- Ollama running on host machine (port 11434)
+- At least 8GB RAM recommended
 
-### 1. One-Command Setup
+### 1. Launch the System
 ```bash
-git clone https://github.com/GhoshSrinjoy/Web_search_mcp.git
-cd Web_search_mcp
+# Windows
+START_MCP_RAG.BAT
 
-# Build and start all services
-docker-compose up -d --build
-
-# Wait for services to start (about 30 seconds)
+# Linux/Mac  
+docker-compose up --build
 ```
 
-### 2. Start Smart Chat Interface
-```bash
-# Quick start with gpt-oss:20b
-START_WEBSEARCH.BAT
+### 2. Supported Models
+The system works with any Ollama model:
+- `gpt-oss:20b` (default) 
+- `qwen3:0.6b`
+- `qwen3:8b`
+- `llama3:latest`
+- Any other Ollama model
 
-# Or with model selection
-QUICKSTART.BAT
+### 3. Intelligent Query Processing
 
-# Or manually start chat interface
-python smart_ollama_chat.py gpt-oss:20b
+The AI automatically chooses the optimal strategy based on your query:
+
+#### 🔍 **Simple Questions → `smart_answer`**
+```
+You: "What is Tesla's current stock price?"
+
+🤔 Analyzing query...
+📚 Checking knowledge base... (no recent data)
+🔍 Getting current web info...
+📄 Direct answer with source (content < 2KB)
+
+🤖 Tesla (TSLA) is currently trading at $248.50...
+Source: https://finance.yahoo.com/quote/TSLA
 ```
 
-### 3. Verify All Services
-```bash
-# Check service status
-docker-compose ps
+#### 🧠 **Complex Research → `research_query`**  
+```
+You: "Research the latest developments in quantum computing and store findings"
 
-# Test search API
-curl -X POST http://localhost:8055/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "python programming", "max_results": 3}'
+🤔 Complex research query detected...
+🔧 research_query: parallel searches across multiple sources
+🔗 Found 3 sources
+📄 Extracting content in parallel...
+💾 Stored 2 large articles (>500 chars each)  
+📄 Direct summary from 1 small article
+📚 RAG synthesis from stored content
 
-# Test content extraction
-curl -X POST http://localhost:8055/extract \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com"}'
-
-# Check service health
-curl http://localhost:8055/health
+🤖 Comprehensive quantum computing report with:
+- Current breakthrough summaries
+- Stored knowledge synthesis  
+- Full source attribution
 ```
 
-### 4. Connect MCP Client
+#### 📚 **Knowledge Questions → RAG-First**
+```
+You: "What do we know about Tesla from our previous research?"
 
-The MCP server runs on stdio protocol (standard for MCP):
-```json
-{
-  "mcpServers": {
-    "websearch": {
-      "command": "docker",
-      "args": ["exec", "websearch_mcp-mcp-1", "python", "server.py"]
-    }
-  }
-}
+🤔 Knowledge-based query...
+📚 High relevance match found (similarity: 0.89)
+✅ Answered from knowledge base only
+
+🤖 Based on stored research: Tesla's Q3 2024 results showed...
+Sources: 3 previously stored articles
 ```
 
-For direct HTTP testing, use the extractor service endpoints at `http://localhost:8055`
+## 🧠 Advanced Features
 
-## 🛠 Configuration
+### Dynamic Tool Selection & Content Processing
+Based on MCP 2025 specification with intelligent decision making:
 
-### 🔐 Security Setup (Important!)
+#### 🎯 **Query Analysis & Tool Routing:**
+- **Simple/Direct questions** → `smart_answer` (RAG-first, web supplement)
+- **Complex research** → `research_query` (parallel search + extraction + RAG)
+- **Knowledge-only queries** → `rag_search` (pure knowledge base)
+- **Specific URL extraction** → `extract_content` + conditional storage
 
-**Generate a new SearXNG secret key before deployment:**
+#### 📊 **Content Size Intelligence:**
+- **Small content (<2KB)** → Direct consumption and immediate response
+- **Medium content (2KB-10KB)** → Store in knowledge base + provide summary  
+- **Large content (>10KB)** → Smart chunking + embedding + RAG synthesis
+- **Too large (>10MB)** → Truncation with warning
 
-```bash
-# Generate a secure secret key
-openssl rand -hex 32
+#### ⚡ **Parallel Processing with Redis Coordination:**
+- **Multiple URLs** → Concurrent extraction via asyncio.gather()
+- **Search caching** → 30-minute TTL to avoid duplicate searches
+- **Duplicate prevention** → Content hash checking before storage
+- **Load balancing** → Redis-coordinated task distribution
 
-# Or in Python
-python -c "import secrets; print(secrets.token_hex(32))"
+### Intelligent Content Processing
+- **Smart Chunking** - Semantic boundary detection
+- **Embedding Generation** - Using Ollama's nomic-embed-text
+- **Similarity Search** - Cosine similarity with configurable thresholds
+- **Source Tracking** - Full provenance and citation management
 
-# Or online
-# https://www.allkeysgenerator.com/Random/Security-Encryption-Key-Generator.aspx
+### Data Persistence
+- **ChromaDB** - Persistent vector storage in `./data/chroma_db/`
+- **Redis** - Fast caching and session data
+- **Docker Volumes** - Automatic data persistence across restarts
+
+## 🔍 Example Workflows
+
+### 1. Research Assistant
+```
+"Research the company Tesla's recent quarterly results and store the findings"
+→ web_search → extract_content → store_content → summarize
 ```
 
-**Update the secret key in `config/searxng/settings.yml`:**
-```yaml
-server:
-  secret_key: "YOUR_GENERATED_SECRET_KEY_HERE"  # Replace this!
+### 2. Knowledge Synthesis  
+```  
+"What do we know about climate change impacts from our knowledge base?"
+→ rag_search → synthesize from stored content
 ```
+
+### 3. Fact Verification
+```
+"Is this claim about AI development accurate: [claim]"
+→ rag_search (stored knowledge) → web_search (current info) → compare
+```
+
+## 📊 Monitoring & Health
+
+- **Health Checks** - All services have built-in health monitoring
+- **Service Dependencies** - Proper startup order and dependency management
+- **Logging** - Comprehensive logging across all services
+- **Performance** - Optimized for low-latency tool selection
+
+## 🛠️ Configuration
 
 ### Environment Variables
+```yaml
+# MCP Client
+OLLAMA_URL: "http://host.docker.internal:11434"
+WEBSEARCH_URL: "http://extractor:8055"
 
-#### MCP Server (`services/mcp/`)
-```bash
-PORT=8001                          # Server port
-SEARXNG_URL=http://searxng:8080   # SearXNG instance
-EXTRACTOR_URL=http://extractor:8055 # Content extractor
-REDIS_URL=redis://redis:6379       # Redis cache
-MAX_CONCURRENT_REQUESTS=5          # Batch fetch limit
-RATE_LIMIT_PER_DOMAIN=2           # Requests per second per domain
-CACHE_TTL=3600                    # Cache duration (seconds)
+# Extractor Service  
+MAX_CONTENT_LENGTH: "10485760"  # 10MB
+REQUEST_TIMEOUT: "30"
+
+# SearXNG
+SEARXNG_SECRET: "change_this_searxng_secret_key"
 ```
 
-#### Content Extractor (`services/extractor/`)
-```bash
-PORT=8055                         # Extractor port
-REDIS_URL=redis://redis:6379      # Redis cache
-MAX_CONTENT_LENGTH=10485760       # Max content size (10MB)
-REQUEST_TIMEOUT=30                # Request timeout (seconds)
-```
+### Customization
+- **Search Engines** - Modify `config/searxng/settings.yml`
+- **Embedding Models** - Change model in `content_vectorizer.py`
+- **Chunking Strategy** - Adjust parameters in smart_chunk()
+- **Tool Behavior** - Customize MCP tools in `mcp_server.py`
 
-### SearXNG Configuration
+## 📈 System Requirements
 
-Edit `config/searxng/settings.yml` to:
-- Enable/disable search engines
-- Configure rate limiting  
-- Set default search preferences
-- Configure privacy settings
+### Minimum
+- 4GB RAM
+- 2 CPU cores  
+- 10GB disk space
 
-## 📊 Usage Examples
+### Recommended
+- 8GB+ RAM
+- 4+ CPU cores
+- 50GB+ disk space (for vector storage)
+- SSD storage for better performance
 
-### Basic Web Search
-```python
-# Search for recent AI news
-results = await web_search(
-    query="artificial intelligence breakthroughs",
-    max_results=10,
-    time_range="week",
-    language="en"
-)
+## 🔐 Security Notes
 
-print(f"Found {results.count} results")
-for result in results.results:
-    print(f"- {result.title}: {result.url}")
-```
+- SearXNG runs with minimal privileges
+- Content extraction has size limits
+- No external API keys required
+- All data stored locally
 
-### Content Extraction
-```python
-# Extract content from a URL
-content = await fetch_content(
-    url="https://example.com/article",
-    extract_images=True,
-    timeout=30
-)
+## 🤝 Model Context Protocol (MCP) 2025
 
-print(f"Title: {content.title}")
-print(f"Content: {content.text[:500]}...")
-print(f"Images: {len(content.images)}")
-```
+This implementation follows MCP 2025 specification:
+- **Dynamic Tool Discovery** - Runtime tool registration and updates
+- **Resource Management** - Efficient context and resource handling  
+- **Standardized Interface** - Universal AI-tool communication
+- **Extensible Architecture** - Easy addition of new tools and services
 
-### Batch Operations
-```python
-# Process multiple URLs concurrently
-urls = [
-    "https://example1.com",
-    "https://example2.com", 
-    "https://example3.com"
-]
-
-contents = await batch_fetch(
-    urls=urls,
-    max_concurrent=3,
-    use_javascript=False
-)
-
-for content in contents:
-    print(f"{content.title}: {len(content.text)} chars")
-```
-
-### Advanced Search with Filters
-```python
-# Academic paper search
-results = await web_search(
-    query="machine learning transformers",
-    categories="science",
-    time_range="month", 
-    safe_search=0,
-    max_results=20
-)
-
-# Extract content from top papers
-papers = await batch_fetch([r.url for r in results.results[:5]])
-```
-
-## 🔧 Management Commands
-
-```bash
-# Deployment
-./deploy.sh                    # Initial deployment
-./deploy.sh restart           # Restart all services  
-./deploy.sh stop              # Stop all services
-
-# Monitoring  
-./deploy.sh logs              # View service logs
-./deploy.sh status            # Check service status
-./deploy.sh test              # Run functionality tests
-
-# Manual operations
-docker-compose up -d          # Start services
-docker-compose down           # Stop services
-docker-compose logs -f mcp    # Follow MCP server logs
-```
-
-## 📈 Performance & Scaling
-
-### Caching Strategy
-- **Search Results**: 1 hour TTL, keyed by query+filters
-- **Page Content**: 1 hour TTL, keyed by URL hash
-- **Redis Memory**: Configure `maxmemory` and eviction policy
-
-### Rate Limiting
-- **Per Domain**: 2 requests/second (configurable)
-- **Global Concurrency**: 5 concurrent requests (configurable)  
-- **Request Timeout**: 30 seconds (configurable)
-
-### Resource Usage
-- **Memory**: ~2-4GB for full stack
-- **CPU**: Scales with concurrent requests
-- **Storage**: Redis persistence + container images
-
-## 🔍 Monitoring & Debugging
-
-### Health Checks
-```bash
-# Check all services
-curl http://localhost:8001/health  # MCP server
-curl http://localhost:8055/health  # Content extractor
-curl http://localhost:8080/healthz # SearXNG
-
-# Redis status
-docker-compose exec redis redis-cli info stats
-```
-
-### Logging
-```bash
-# Service logs
-docker-compose logs -f mcp        # MCP server logs
-docker-compose logs -f extractor  # Extractor logs
-docker-compose logs -f searxng    # SearXNG logs
-
-# Redis monitoring
-docker-compose exec redis redis-cli monitor
-```
-
-### Cache Management
-```python
-# Check cache stats
-session_info = await get_session_info()
-print(f"Searches: {session_info.searches_performed}")
-print(f"Extractions: {session_info.pages_extracted}")
-
-# Clear cache
-await clear_cache("search:*")  # Clear search cache
-await clear_cache("content:*") # Clear content cache  
-await clear_cache()            # Clear all cache
-```
-
-## 🚦 Troubleshooting
-
-### Common Issues
-
-#### 1. Services Not Starting
-```bash
-# Check Docker resources
-docker system df
-docker system prune  # Free up space
-
-# Restart specific service
-docker-compose restart mcp
-```
-
-#### 2. Search Not Working
-```bash
-# Check SearXNG engines
-curl http://localhost:8080/search?q=test&format=json
-
-# Verify MCP can reach SearXNG
-docker-compose exec mcp curl http://searxng:8080/healthz
-```
-
-#### 3. Content Extraction Failing
-```bash
-# Test extractor directly
-curl -X POST http://localhost:8055/extract \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com"}'
-
-# Check extractor logs
-docker-compose logs -f extractor
-```
-
-#### 4. High Memory Usage
-```bash
-# Check Redis memory
-docker-compose exec redis redis-cli info memory
-
-# Configure Redis maxmemory
-docker-compose exec redis redis-cli config set maxmemory 1gb
-docker-compose exec redis redis-cli config set maxmemory-policy allkeys-lru
-```
-
-### Performance Tuning
-
-1. **Increase concurrency** for batch operations
-2. **Adjust cache TTL** based on content freshness needs
-3. **Configure Redis eviction** policy for memory management
-4. **Use SSD storage** for better Redis performance
-5. **Monitor rate limits** and adjust per domain
-
-## 🤖 Smart Chat Interface
-
-### New: Intelligent Tool Usage
-- **Natural Language**: "Tell me about recent FAPS projects"
-- **Auto Tool Chaining**: Automatically searches + extracts content like Claude/GPT
-- **Smart Intent Detection**: Understands what you want without explicit commands
-- **Multiple Interface Options**: Simple commands or natural conversation
-
-### Usage Options
-1. **Smart Interface** (`smart_ollama_chat.py`): Natural language with auto tool chaining
-2. **Simple Interface** (`simple_ollama_chat.py`): Manual commands only
-3. **MCP Integration**: Full Claude Desktop / other MCP client support
-
-## 📄 License
-
-Apache License, Version 2.0 - see LICENSE file for details.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Test changes thoroughly  
-4. Submit pull request
-
-## 🆘 Support
-
-- **Issues**: Create GitHub issue with logs and configuration
-- **Discussions**: Use GitHub discussions for questions
-- **Documentation**: Check this README and inline code comments
+The AI model autonomously decides which tools to use based on the query, making it truly autonomous and context-aware.

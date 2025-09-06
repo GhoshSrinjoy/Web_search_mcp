@@ -1,0 +1,15 @@
+.git
+.gitignore
+README.md
+*.bat
+.env
+data/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+.coverage
+htmlcov/

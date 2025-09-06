@@ -1,0 +1,7 @@
+httpx
+asyncio
+chromadb
+numpy
+mcp
+uvicorn
+pydantic

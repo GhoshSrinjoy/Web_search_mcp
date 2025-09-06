@@ -1,12 +1,10 @@
-version: "3.9"
-
 services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --save 60 1
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -55,29 +53,41 @@ services:
       timeout: 3s
       retries: 3
 
-  mcp:
-    build: ./services/mcp
+  vectorstore:
+    build: ./services/vectorstore
     restart: unless-stopped
     environment:
-      PORT: "8001"
-      SEARXNG_URL: "http://searxng:8080"
-      EXTRACTOR_URL: "http://extractor:8055"
-      REDIS_URL: "redis://redis:6379"
-      MAX_CONCURRENT_REQUESTS: "5"
-      RATE_LIMIT_PER_DOMAIN: "2"  # requests per second
-      CACHE_TTL: "3600"  # 1 hour
-      USE_DISTRIBUTED_RATE_LIMIT: "false"  # Enable for multi-instance deployments
-    ports:
-      - "8001:8001"
+      PYTHONPATH: "/app"
+      OLLAMA_URL: "http://host.docker.internal:11434"
+    volumes:
+      - ./data/chroma_db:/app/data/chroma_db
     depends_on:
-      - searxng
-      - extractor
       - redis
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "python", "-c", "import chromadb; print('OK')"]
       interval: 30s
-      timeout: 3s
+      timeout: 10s
       retries: 3
+
+
+  mcp-client:
+    build: .
+    environment:
+      WEBSEARCH_URL: "http://extractor:8055"
+      OLLAMA_URL: "http://host.docker.internal:11434"
+      PYTHONPATH: "/app"
+    volumes:
+      - ./data/chroma_db:/app/data/chroma_db
+      - ./src:/app/src
+      - ./services:/app/services
+    depends_on:
+      - extractor
+      - vectorstore
+      - searxng
+      - redis
+    stdin_open: true
+    tty: true
+    command: ["python", "src/client/mcp_client.py"]
 
 volumes:
   redis_data:
