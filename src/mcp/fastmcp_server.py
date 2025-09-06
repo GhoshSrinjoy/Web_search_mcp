@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Working MCP Server using FastMCP for WebSearch, Content Extraction, and RAG
 Based on official FastMCP examples and documentation

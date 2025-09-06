@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 MCP Server for WebSearch, Content Extraction, and RAG Tools
 This server exposes tools that LLMs can call autonomously via MCP

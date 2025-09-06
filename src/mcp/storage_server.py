@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Individual MCP Server for Storage Component
 """

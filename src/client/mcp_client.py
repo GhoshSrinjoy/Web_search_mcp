@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 MCP Client that bridges Ollama with MCP server
 Acts as a bridge between Ollama's function calling and MCP protocol

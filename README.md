@@ -1,180 +1,79 @@
 # WebSearch MCP
 
-A Model Context Protocol (MCP) server that provides web search, content extraction, and RAG capabilities for AI assistants. **Docker-only** implementation with full containerized services.
-
-## What is MCP?
-
-Model Context Protocol (MCP) is an open standard that connects AI assistants to data sources and tools. Think of it as a standardized way for LLMs to access external services like web search, databases, and APIs.
+Docker-only MCP implementation with web search, content extraction, and RAG capabilities.
 
 ## Quick Start
 
-### Interactive Chat with Ollama (Docker)
-
-1. **Install Ollama** and pull Qwen models:
-```bash
-ollama pull qwen3:8b
-ollama pull qwen3:0.6b
-```
-
-2. **Start the Docker pipeline**:
+### Interactive Chat
 ```bash
 START_MCP_INTERACTIVE.BAT
 ```
+Choose Docker Mode. Done.
 
-This automatically:
-- Builds and starts all Docker containers
-- Launches Redis, SearXNG, content extractor, and vector database
-- Starts interactive chat where LLM can autonomously call MCP tools
+### Claude Desktop Integration
 
-### Use with Claude Desktop
-
-**⚠️ For Docker setup, use the interactive mode instead:**
+1. **Start Docker services**:
 ```bash
-START_MCP_INTERACTIVE.BAT
-```
-Choose option 1 (Docker Mode) for the complete containerized experience with all tools.
-
-**Alternative: Local MCP servers with Docker services**
-
-If you prefer Claude Desktop integration:
-
-1. **Start Docker services first**:
-```bash
-docker-compose up -d redis searxng extractor vectorstore
-```
-
-2. **Install Python dependencies locally**:
-```bash
-pip install -r requirements.txt
-```
-
-3. **Add to Claude Desktop config** (`%APPDATA%\Claude\claude_desktop_config.json`):
-```json
-{
-  "mcpServers": {
-    "websearch-mcp": {
-      "command": "python",
-      "args": ["D:/src/websearch_mcp/src/mcp/research_server.py"],
-      "env": {
-        "WEBSEARCH_URL": "http://localhost:8055",
-        "CHROMA_PATH": "D:/src/websearch_mcp/data/chroma_db"
-      }
-    }
-  }
-}
-```
-
-4. **Restart Claude Desktop** - The research_server provides all tools in one MCP server
-
-## Available MCP Tools
-
-The system exposes these tools that LLMs can call autonomously:
-
-- **web_search** - Search the internet for current information
-- **extract_content** - Extract full text from web URLs  
-- **rag_search** - Search stored knowledge base
-- **store_content** - Store content in knowledge base
-- **knowledge_stats** - Get knowledge base statistics
-- **research_query** - Comprehensive research with auto storage and multi-source analysis
-- **smart_answer** - Intelligent answers using stored + web data
-
-## Scripts to Run
-
-### Main Script
-- **`START_MCP_INTERACTIVE.BAT`** - Complete Docker pipeline with interactive chat
-
-### Individual Docker Services
-```bash
-# Start all services
 docker-compose up -d
-
-# Start specific services
-docker-compose up -d redis searxng extractor
-docker-compose up -d vectorstore
-
-# View logs
-docker-compose logs -f
-
-# Stop everything  
-docker-compose down
 ```
 
-## How It Works
+2. **Copy the config**:
+```bash
+copy claude_desktop_config.json %APPDATA%\Claude\claude_desktop_config.json
+```
 
-1. **MCP Servers** - Multiple specialized MCP servers for different functions
-2. **Docker Services** - Web search (SearXNG), content extraction, vector storage (ChromaDB)
-3. **LLM Integration** - LLM decides when to call tools autonomously via tool calling
-4. **Caching** - Redis caches search results and extractions for performance
-5. **RAG Pipeline** - Automatic content storage and retrieval for enhanced answers
+3. **Restart Claude Desktop**
+
+The model now has direct access to all web search, extraction, storage, RAG, and research tools.
+
+## Available Tools
+
+- **web_search** - Internet search
+- **extract_content** - Extract content from URLs  
+- **rag_search** - Search knowledge base
+- **store_content** - Store content
+- **knowledge_stats** - KB stats
+- **research_query** - Multi-source research with auto-storage
+- **smart_answer** - Enhanced answers using stored + web data
 
 ## Architecture
 
 ```
-┌─────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│    LLM      │────│ MCP Multi-Client │────│ Multiple MCP    │
-│ (Ollama/    │    │                 │    │ Servers         │
-│  Claude)    │    └─────────────────┘    └─────────────────┘
-└─────────────┘                                    │
-                                                   ├── websearch_server
-                                                   ├── extractor_server  
-                                                   ├── storage_server
-                                                   ├── rag_server
-                                                   └── research_server
-                                                           │
-                           ┌────────────────────────────────┼────────────────────┐
-                           │                                │                    │
-                    ┌──────▼──────┐              ┌─────────▼────────┐    ┌──────▼──────┐
-                    │   SearXNG   │              │   ChromaDB       │    │    Redis    │
-                    │  (Search)   │              │  (Vectors)       │    │   (Cache)   │
-                    └─────────────┘              └──────────────────┘    └─────────────┘
-                           │
-                    ┌──────▼──────┐
-                    │  Extractor  │
-                    │  (Content)  │
-                    └─────────────┘
+Claude/LLM ──► Docker Container ──► MCP Servers ──► Services
+                                      │
+                                      ├── SearXNG (Search)
+                                      ├── Extractor (Content)
+                                      ├── ChromaDB (Vectors)
+                                      └── Redis (Cache)
 ```
+
+## Scripts
+
+- **`START_MCP_INTERACTIVE.BAT`** - Complete Docker pipeline
+- **`docker-compose up -d`** - Start all services
+- **`docker-compose down`** - Stop everything
+- **`docker-compose logs -f`** - View logs
 
 ## Configuration
 
-Main config file: `mcp_servers_config.json`
+`mcp_servers_config.json`:
 ```json
 {
   "llm": {
-    "provider": "ollama",
     "model": "qwen3:8b",
-    "baseUrl": "http://localhost:11434",
-    "temperature": 0.1
+    "baseUrl": "http://localhost:11434"
   },
-  "availableModels": [
-    "qwen3:0.6b", 
-    "qwen3:8b"
-  ]
+  "availableModels": ["qwen3:0.6b", "qwen3:8b"]
 }
 ```
 
-## Key Files
+## Requirements
 
-- **`START_MCP_INTERACTIVE.BAT`** - Main launcher script
-- **`src/client/mcp_multi_client.py`** - Multi-MCP client with tool chaining
-- **`src/mcp/`** - All MCP server implementations
-- **`docker-compose.yml`** - Container orchestration
-- **`mcp_servers_config.json`** - LLM and server configuration
+- Docker + Docker Compose
+- Ollama with qwen3 models
 
 ## Troubleshooting
 
-**Empty LLM responses**: 
-- Ensure Ollama is running: `ollama serve`
-- Verify model is pulled: `ollama list`
-
-**Tool calls not working**: 
-- Check container logs: `docker-compose logs`
-- Ensure services are healthy: `docker-compose ps`
-
-**Claude integration not working**:
-- Restart Claude Desktop after config changes
-- Check file paths are absolute in config
-- Ensure Docker services are running first
-
-**Network issues**: 
-- Verify containers can communicate: `docker network ls`
-- Check Ollama is accessible at `http://host.docker.internal:11434`
+**No response**: Check `ollama serve` is running
+**Tool errors**: `docker-compose logs` 
+**Claude integration**: Restart Claude Desktop after config changes

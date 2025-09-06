@@ -1,0 +1,40 @@
+{
+  "mcpServers": {
+    "websearch": {
+      "command": "docker",
+      "args": ["exec", "-i", "websearch_mcp-mcp-client-1", "python", "src/mcp/websearch_server.py"],
+      "env": {
+        "WEBSEARCH_URL": "http://extractor:8055"
+      }
+    },
+    "extractor": {
+      "command": "docker",
+      "args": ["exec", "-i", "websearch_mcp-mcp-client-1", "python", "src/mcp/extractor_server.py"],
+      "env": {
+        "WEBSEARCH_URL": "http://extractor:8055"
+      }
+    },
+    "storage": {
+      "command": "docker",
+      "args": ["exec", "-i", "websearch_mcp-mcp-client-1", "python", "src/mcp/storage_server.py"],
+      "env": {
+        "CHROMA_PATH": "/app/data/chroma_db"
+      }
+    },
+    "rag": {
+      "command": "docker",
+      "args": ["exec", "-i", "websearch_mcp-mcp-client-1", "python", "src/mcp/rag_server.py"],
+      "env": {
+        "CHROMA_PATH": "/app/data/chroma_db"
+      }
+    },
+    "research": {
+      "command": "docker",
+      "args": ["exec", "-i", "websearch_mcp-mcp-client-1", "python", "src/mcp/research_server.py"],
+      "env": {
+        "WEBSEARCH_URL": "http://extractor:8055",
+        "CHROMA_PATH": "/app/data/chroma_db"
+      }
+    }
+  }
+}

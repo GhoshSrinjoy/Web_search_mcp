@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Individual MCP Server for Web Search Component
 """
