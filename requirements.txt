@@ -1,7 +1,7 @@
 httpx
-asyncio
+aiofiles
+trafilatura
+redis
 chromadb
-numpy
-mcp
-uvicorn
-pydantic
+sentence-transformers
+fastmcp

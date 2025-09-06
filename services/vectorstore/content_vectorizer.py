@@ -80,7 +80,7 @@ class ContentVectorizer:
                 result = response.json()
                 return result["embedding"]
             except Exception as e:
-                print(f"❌ Embedding failed for text: {text[:100]}... Error: {e}")
+                print(f" Embedding failed for text: {text[:100]}... Error: {e}")
                 raise
     
     def smart_chunk(self, text: str, max_chunk_size: int = 512, overlap: int = 50) -> List[str]:
@@ -177,7 +177,7 @@ class ContentVectorizer:
     
     async def process_content(self, content: ContentResult) -> Dict[str, Any]:
         """Process and store content with embeddings"""
-        print(f"   🧠 Processing content for embedding: {content.title}")
+        print(f"   Processing content for embedding: {content.title}")
         
         try:
             # Check if content already exists
@@ -186,7 +186,7 @@ class ContentVectorizer:
             )
             
             if existing and len(existing['documents']) > 0:
-                print(f"   ♻️  Content already vectorized: {content.title}")
+                print(f"     Content already vectorized: {content.title}")
                 return {
                     "status": "exists",
                     "chunks": len(existing['documents']),
@@ -197,10 +197,10 @@ class ContentVectorizer:
             chunks = self.smart_chunk(content.text, max_chunk_size=512)
             
             if not chunks:
-                print(f"   ⚠️  No chunks generated for: {content.title}")
+                print(f"     No chunks generated for: {content.title}")
                 return {"status": "no_chunks", "content_hash": content.content_hash}
             
-            print(f"   ✂️  Generated {len(chunks)} chunks")
+            print(f"     Generated {len(chunks)} chunks")
             
             # Generate embeddings for all chunks
             embeddings = []
@@ -208,13 +208,13 @@ class ContentVectorizer:
                 try:
                     embedding = await self.get_ollama_embedding(chunk)
                     embeddings.append(embedding)
-                    print(f"   📊 Embedded chunk {i+1}/{len(chunks)}")
+                    print(f"   Embedded chunk {i+1}/{len(chunks)}")
                 except Exception as e:
-                    print(f"   ❌ Failed to embed chunk {i+1}: {e}")
+                    print(f"    Failed to embed chunk {i+1}: {e}")
                     continue
             
             if not embeddings:
-                print(f"   ❌ No embeddings generated for: {content.title}")
+                print(f"    No embeddings generated for: {content.title}")
                 return {"status": "embedding_failed", "content_hash": content.content_hash}
             
             # Store in ChromaDB
@@ -235,7 +235,7 @@ class ContentVectorizer:
                 metadatas=metadatas[:len(embeddings)]
             )
             
-            print(f"   ✅ Stored {len(embeddings)} chunks in vector DB")
+            print(f"    Stored {len(embeddings)} chunks in vector DB")
             
             return {
                 "status": "success",
@@ -246,7 +246,7 @@ class ContentVectorizer:
             }
             
         except Exception as e:
-            print(f"   ❌ Content processing failed: {e}")
+            print(f"    Content processing failed: {e}")
             return {
                 "status": "error",
                 "error": str(e),
@@ -256,7 +256,7 @@ class ContentVectorizer:
     async def rag_search(self, query: str, max_results: int = 5, 
                         similarity_threshold: float = 0.1) -> RAGResult:
         """Perform RAG search with context retrieval"""
-        print(f"🔍 RAG Search: {query}")
+        print(f"RAG Search: {query}")
         
         try:
             # Generate query embedding with search_query prefix
@@ -306,7 +306,7 @@ class ContentVectorizer:
                     # Fallback: convert ChromaDB distance to similarity (lower distance = higher similarity)
                     similarity = max(0, 1 - distance)
                 
-                print(f"   📊 Chunk {i+1}: similarity = {similarity:.3f}")
+                print(f"   Chunk {i+1}: similarity = {similarity:.3f}")
                 
                 if similarity >= similarity_threshold:
                     filtered_chunks.append(doc)
@@ -327,7 +327,7 @@ class ContentVectorizer:
                 for chunk, meta in zip(filtered_chunks, filtered_sources)
             ])
             
-            print(f"📋 Retrieved {len(filtered_chunks)} relevant chunks")
+            print(f" Retrieved {len(filtered_chunks)} relevant chunks")
             
             # For now, return structured result without LLM generation
             # The SmartOllamaChat will handle the final response generation
@@ -340,7 +340,7 @@ class ContentVectorizer:
             )
             
         except Exception as e:
-            print(f"❌ RAG search failed: {e}")
+            print(f" RAG search failed: {e}")
             return RAGResult(
                 query=query,
                 retrieved_chunks=[],

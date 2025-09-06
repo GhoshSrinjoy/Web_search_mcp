@@ -76,10 +76,12 @@ services:
       WEBSEARCH_URL: "http://extractor:8055"
       OLLAMA_URL: "http://host.docker.internal:11434"
       PYTHONPATH: "/app"
+      CHROMA_PATH: "/app/data/chroma_db"
     volumes:
       - ./data/chroma_db:/app/data/chroma_db
       - ./src:/app/src
       - ./services:/app/services
+      - ./mcp_servers_config.json:/app/mcp_servers_config.json
     depends_on:
       - extractor
       - vectorstore
@@ -87,7 +89,7 @@ services:
       - redis
     stdin_open: true
     tty: true
-    command: ["python", "src/client/mcp_client.py"]
+    command: ["python", "src/client/mcp_multi_client.py"]
 
 volumes:
   redis_data:

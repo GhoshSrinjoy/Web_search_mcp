@@ -1,0 +1,52 @@
+{
+  "mcpServers": {
+    "websearch": {
+      "command": "python",
+      "args": ["src/mcp/websearch_server.py"],
+      "env": {
+        "WEBSEARCH_URL": "http://extractor:8055"
+      }
+    },
+    "extractor": {
+      "command": "python", 
+      "args": ["src/mcp/extractor_server.py"],
+      "env": {
+        "WEBSEARCH_URL": "http://extractor:8055"
+      }
+    },
+    "storage": {
+      "command": "python",
+      "args": ["src/mcp/storage_server.py"],
+      "env": {
+        "CHROMA_PATH": "./data/chroma_db"
+      }
+    },
+    "rag": {
+      "command": "python",
+      "args": ["src/mcp/rag_server.py"],
+      "env": {
+        "CHROMA_PATH": "./data/chroma_db"
+      }
+    },
+    "research": {
+      "command": "python",
+      "args": ["src/mcp/research_server.py"], 
+      "env": {
+        "WEBSEARCH_URL": "http://extractor:8055",
+        "CHROMA_PATH": "./data/chroma_db"
+      }
+    }
+  },
+  "llm": {
+    "provider": "ollama",
+    "model": "gpt-oss:20b",
+    "baseUrl": "http://localhost:11434",
+    "temperature": 0.1,
+    "maxTokens": 4000
+  },
+  "availableModels": [
+    "gpt-oss:20b",
+    "qwen3:0.6b",
+    "qwen3:8b"
+  ]
+}

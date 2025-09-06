@@ -15,6 +15,6 @@
   ],
   "defaultModel": "gpt-oss:20b",
   "llm": {
-    "baseUrl": "http://ollama:11434"
+    "baseUrl": "http://host.docker.internal:11434"
   }
 }
