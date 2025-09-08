@@ -1,10 +1,10 @@
 # WebSearch MCP
 
-## What This Does
+![Interactive MCP Client Demo](demo.png)
 
 A comprehensive MCP (Model Context Protocol) implementation that provides AI models with web search, content extraction, vector storage, and RAG (Retrieval Augmented Generation) capabilities. This system allows AI to autonomously search the internet, extract and store content, and perform intelligent retrieval operations.
 
-## How It Works
+## Features
 
 The system uses Docker containers to orchestrate multiple services:
 - **SearXNG**: Privacy-focused web search engine
@@ -13,7 +13,7 @@ The system uses Docker containers to orchestrate multiple services:
 - **Redis**: Caching layer for performance
 - **MCP Servers**: Multiple specialized servers providing different tool capabilities
 
-## Why This Architecture
+## Architecture Benefits
 
 - **Containerized**: Easy deployment, consistent environment
 - **Modular**: Each service is independent and scalable
@@ -21,24 +21,46 @@ The system uses Docker containers to orchestrate multiple services:
 - **Tool-rich**: Provides comprehensive web research capabilities to AI models
 - **Interactive**: Direct chat interface for testing and development
 
-## Setup & Usage
+## Setup
 
-### Option 1: Interactive Mode (Windows)
+### Prerequisites
+- Docker & Docker Compose installed
+- Ollama running locally with qwen3 models (`ollama serve`)
 
-Run the main script:
+### 1. Clone Repository
+```bash
+git clone <repository-url>
+cd websearch_mcp
+```
+
+### 2. Create Environment File
+Create a `.env` file with:
+```bash
+# Security Configuration  
+SEARXNG_SECRET=your_32_char_secret_here
+
+# Redis Configuration
+REDIS_URL=redis://redis:6379/0
+```
+
+Generate a SearXNG secret:
+```bash
+openssl rand -hex 32
+```
+
+### 3. Usage Options
+
+#### Option A: Interactive Mode (Windows)
 ```bash
 START_MCP_INTERACTIVE.BAT
 ```
 
-This will:
-1. Build all Docker containers
-2. Start all required services (Redis, SearXNG, Extractor, ChromaDB)
-3. Launch an interactive chat interface with full tool access
+This automatically:
+1. Builds all Docker containers
+2. Starts all required services
+3. Launches interactive chat interface
 
-### Option 2: Manual Docker Setup (Linux/Mac/Windows)
-
-For non-Windows systems or manual control:
-
+#### Option B: Manual Docker Setup (Linux/Mac/Windows)
 1. **Build containers**:
 ```bash
 docker-compose build
@@ -57,15 +79,8 @@ sleep 10  # Wait for vectorstore
 docker-compose run --rm mcp-client
 ```
 
-**Prerequisites for both options**: 
-- Docker & Docker Compose installed
-- Ollama running locally with qwen3 models (`ollama serve`)
-
-### Option 3: Claude Desktop Integration
-
-For integrating with Claude Desktop:
-
-1. **Start the services**:
+#### Option C: Claude Desktop Integration
+1. **Start services**:
 ```bash
 docker-compose up -d
 ```
@@ -99,23 +114,6 @@ Claude will now have access to all web search and RAG tools.
 - **`mcp_servers_config.json`** - LLM model configuration
 
 ## Configuration
-
-### Environment Variables (.env)
-
-Create or modify `.env` file for security settings:
-
-```bash
-# Security Configuration  
-SEARXNG_SECRET=your_32_char_secret_here
-
-# Redis Configuration
-REDIS_URL=redis://redis:6379/0
-```
-
-To generate a new SearXNG secret:
-```bash
-openssl rand -hex 32
-```
 
 ### LLM Configuration (mcp_servers_config.json)
 
@@ -173,12 +171,6 @@ The complete `mcp_servers_config.json` structure:
   ]
 }
 ```
-
-## Demo
-
-![Interactive MCP Client Demo](demo.png)
-
-The system provides an interactive chat interface with access to multiple MCP tools including web search, content extraction, and RAG capabilities.
 
 ## Troubleshooting
 
